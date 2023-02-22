@@ -3,91 +3,169 @@ package mutiny;
 import io.smallrye.mutiny.Uni;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 class NodeTest {
 
   @Test
   void test_item_subscribe() {
-    Uni<String> uni = Uni.createFrom().item("ramon"); // Create from String Object
-    uni.subscribe().with(System.out::println);
+    Uni<String> uni = Uni
+        .createFrom()
+        .item("ramon"); // Create from String Object
+    uni
+        .subscribe()
+        .with(System.out::println);
 
-    Uni<Integer> uni2 = Uni.createFrom().item(22); // Create from Integer Object
-    uni2.subscribe().with(System.out::println);
+    Uni<Integer> uni2 = Uni
+        .createFrom()
+        .item(22); // Create from Integer Object
+    uni2
+        .subscribe()
+        .with(System.out::println);
 
     Node node = new Node("node_1", null);
 
-    Uni<Node> uniNode = Uni.createFrom().item(node); // Create from Node Object
-    uniNode.subscribe().with(System.out::println);
+    Uni<Node> uniNode = Uni
+        .createFrom()
+        .item(node); // Create from Node Object
+    uniNode
+        .subscribe()
+        .with(System.out::println);
 
     node.setData("Some random data"); // setting data
     System.out.println("node object: " + node);
 
-    uniNode.subscribe().with(System.out::println);
+    uniNode
+        .subscribe()
+        .with(System.out::println);
   }
 
   @Test
   void test_simple_chain() {
     // The node_1 result must be set to data of node_2 ...
-    Node node = new Node("node_1", null);
-    Uni<String> nodeResp = runNode(node);
+    // node_1 create +  run
+    Node n1 = new Node("node_1", null);
+    Uni<String> n1Res = runNode(n1);
 
-    nodeResp.subscribe().with(item -> System.out.println("nodeResp: " + item));
+    n1Res
+        .subscribe()
+        .with(item -> System.out.println("## n1Res: " + item));
 
-    Uni<Node> node2 = nodeResp.onItem().transform(item -> new Node("node_2", item));
-    Uni<String> node2Resp = node2.onItem().transformToUni(item -> runNode(item));
+    // node_2 subscribe to node_1 + run
+    Uni<Node> n2 = n1Res
+        .onItem()
+        .transform(item -> new Node("node_2", item));
+    Uni<String> n2Res = n2
+        .onItem()
+        .transformToUni(item -> runNode(item)); // should use call? why?
 
-    node2Resp.subscribe().with(item -> System.out.println("node2Resp: " + item));
+    n2Res
+        .subscribe()
+        .with(item -> System.out.println("## n2Res: " + item));
 
-    Uni<Node> node3 = node2Resp.onItem().transform(item -> new Node("node_3", item));
-    Uni<String> node3Resp = node3.onItem().transformToUni(item -> runNode(item));
+    // node_3 subscribe to node_2 + run
+    Uni<Node> n3 = n2Res
+        .onItem()
+        .transform(item -> new Node("node_3", item));
+    Uni<String> n3Res = n3
+        .onItem()
+        .transformToUni(item -> runNode(item));
 
-    node3Resp.subscribe().with(item -> System.out.println("node3Resp: " + item));
+    n3Res
+        .subscribe()
+        .with(item -> System.out.println("## n3Res: " + item));
 
-    Uni<Node> node4 = node3Resp.onItem().transform(item -> new Node("node_4", item));
-    Uni<String> node4Resp = node4.onItem().transformToUni(item -> runNode(item));
+    // node_4 subscribe to node_3 + run
+    Uni<Node> n4 = n3Res
+        .onItem()
+        .transform(item -> new Node("node_4", item));
+    Uni<String> n4Res = n4
+        .onItem()
+        .transformToUni(item -> runNode(item));
 
-    node4Resp.subscribe().with(item -> System.out.println("node4Resp: " + item));
+    n4Res
+        .subscribe()
+        .with(item -> System.out.println("## n4Res: " + item));
   }
 
   @Test
   void test_simple_chain_fix() {
     // The node_1 result must be set to data of node_2
-    Node node = new Node("node_1", null);
-    Uni<String> nodeResp = runNode(node);
+    // node_1 create +  run
+    Node n1 = new Node("node_1", null);
+    Uni<String> n1Res = runNode(n1);
 
-    nodeResp.subscribe().with(item -> System.out.println("nodeResp: " + item));
+    n1Res
+        .subscribe()
+        .with(item -> System.out.println("## n1Res: " + item));
 
-    Uni<Node> node2 = nodeResp.onItem().transform(item -> new Node("node_2", item));
-    Uni<String> node2Resp =
-        node2.onItem().transformToUni(item -> runNode(item)).memoize().indefinitely();
+    // node_2 subscribe to node_1 + run
+    Uni<Node> n2 = n1Res
+        .onItem()
+        .transform(item -> new Node("node_2", item));
 
-    node2Resp.subscribe().with(item -> System.out.println("node2Resp: " + item));
+    Uni<String> n2Res = n2
+        .onItem()
+        .transformToUni(item -> runNode(item))
+        .memoize()
+        .indefinitely();
 
-    Uni<Node> node3 = node2Resp.onItem().transform(item -> new Node("node_3", item));
-    Uni<String> node3Resp = node3.onItem().transformToUni(item -> runNode(item));
+    n2Res
+        .subscribe()
+        .with(item -> System.out.println("## n2Res: " + item));
 
-    node3Resp.subscribe().with(item -> System.out.println("node3Resp: " + item));
+    // node_3 subscribe to node_2 + run
+    Uni<Node> n3 = n2Res
+        .onItem()
+        .transform(item -> new Node("node_3", item));
 
-    Uni<Node> node4 = node3Resp.onItem().transform(item -> new Node("node_4", item));
-    Uni<String> node4Resp = node4.onItem().transformToUni(item -> runNode(item));
+    Uni<String> n3Res = n3
+        .onItem()
+        .transformToUni(item -> runNode(item))
+        .memoize()
+        .indefinitely();
 
-    node4Resp.subscribe().with(item -> System.out.println("node4Resp: " + item));
+    n3Res
+        .subscribe()
+        .with(item -> System.out.println("## n3Res: " + item));
 
-    node2Resp.subscribe().with(item -> System.out.println("node2Resp: " + item));
-    node2Resp.subscribe().with(item -> System.out.println("node2Resp: " + item));
-    node2Resp.subscribe().with(item -> System.out.println("node2Resp: " + item));
-    node2Resp.subscribe().with(item -> System.out.println("node2Resp: " + item));
+    // node_4 subscribe to node_3 + run
+    Uni<Node> n4 = n3Res
+        .onItem()
+        .transform(item -> new Node("node_4", item));
+
+    Uni<String> n4Res = n4
+        .onItem()
+        .transformToUni(item -> runNode(item))
+        .memoize()
+        .indefinitely();
+
+    n4Res
+        .subscribe()
+        .with(item -> System.out.println("## n4Res: " + item));
   }
 
+  @Test
+  void test_simple_chain_generator(){
+    // TODO: write this test.
+    // given
+    // n = numbers of nodes  generate the complete chain and run it.
+
+    // when
+    // the pipeline is running
+
+    // then
+    // . all nodes must be executed once
+    // . the result of node=n must be the result of n + before n's results.
+  }
   public Uni<String> runNode(Node node) {
-    System.out.println("running: " + node.Name + " with: " + node.Data);
-    return Uni.createFrom().item("resp_from_" + node.Name + "_" + node.Data);
+    System.out.println("... running: " + node.Name + " data: " + node.Data);
+    return Uni
+        .createFrom()
+        .item("result_" + node.Name + "_" + node.Data);
   }
 
   private Uni<Node> buildNode(String name, String data) {
-    return Uni.createFrom().item(new Node(name, data));
+    return Uni
+        .createFrom()
+        .item(new Node(name, data));
   }
 }
